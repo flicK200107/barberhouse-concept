@@ -1,16 +1,42 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Clock, ArrowRight, ShoppingBag, Scissors } from 'lucide-react';
 
+// --- Custom Cursor Logic ---
+const useCursor = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [cursorVariant, setCursorVariant] = useState("default");
+
+  useEffect(() => {
+    const mouseMove = e => setMousePosition({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", mouseMove);
+    return () => window.removeEventListener("mousemove", mouseMove);
+  }, []);
+
+  const variants = {
+    default: { x: mousePosition.x - 16, y: mousePosition.y - 16, height: 32, width: 32 },
+    hover: { 
+      height: 100, width: 100, 
+      x: mousePosition.x - 50, y: mousePosition.y - 50, 
+      backgroundColor: "rgba(184, 115, 51, 0.1)", // Transparent Copper
+      border: "1px solid #B87333",
+      mixBlendMode: "screen"
+    }
+  };
+
+  return { mousePosition, cursorVariant, setCursorVariant, variants };
+};
+
 // --- Pages ---
 
-const Home = () => (
+const Home = ({ onHover }) => (
   <div className="pt-32 px-6 md:px-20">
     <motion.h1 
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="text-[12vw] leading-[0.85] font-black tracking-tighter mix-blend-exclusion text-white mb-12"
+      className="text-[12vw] leading-[0.85] font-black tracking-tighter mix-blend-exclusion text-white mb-12 cursor-default"
+      onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}
     >
       BARBER<br/>HOUSE
     </motion.h1>
@@ -33,15 +59,18 @@ const Home = () => (
       </div>
     </div>
 
-    <Link to="/treatments" className="inline-block bg-copper text-black px-12 py-6 font-bold uppercase tracking-widest hover:bg-white transition-colors">
+    <Link to="/treatments" 
+      className="inline-block bg-copper text-black px-12 py-6 font-bold uppercase tracking-widest hover:bg-white transition-colors"
+      onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}
+    >
       View Treatments
     </Link>
   </div>
 );
 
-const Treatments = () => (
+const Treatments = ({ onHover }) => (
   <div className="pt-32 px-6 md:px-20 max-w-5xl mx-auto">
-    <h2 className="text-6xl font-black mb-16 text-white">MENU.</h2>
+    <h2 className="text-6xl font-black mb-16 text-white" onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}>MENU.</h2>
     <div className="space-y-12">
       {[
         { cat: "Hair", items: [
@@ -63,7 +92,8 @@ const Treatments = () => (
           <h3 className="text-copper text-2xl font-bold mb-6 uppercase tracking-widest border-b border-gray-800 pb-2">{section.cat}</h3>
           <div className="grid gap-6">
             {section.items.map((item, j) => (
-              <div key={j} className="flex justify-between items-baseline group hover:pl-4 transition-all duration-300 cursor-default">
+              <div key={j} className="flex justify-between items-baseline group hover:pl-4 transition-all duration-300 cursor-default"
+                   onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}>
                 <div>
                   <span className="text-xl font-bold text-gray-200">{item.name}</span>
                   <span className="ml-4 text-xs text-gray-600 font-mono border border-gray-800 px-2 py-1 rounded">{item.time}</span>
@@ -76,23 +106,25 @@ const Treatments = () => (
       ))}
     </div>
     <div className="mt-20 text-center">
-      <a href="https://buchung.barberhouse.com" target="_blank" className="bg-white text-black px-12 py-4 font-bold uppercase tracking-widest hover:bg-copper transition-colors">
+      <a href="https://buchung.barberhouse.com" target="_blank" 
+         className="bg-white text-black px-12 py-4 font-bold uppercase tracking-widest hover:bg-copper transition-colors"
+         onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}>
         Book Online
       </a>
     </div>
   </div>
 );
 
-const Locations = () => (
+const Locations = ({ onHover }) => (
   <div className="pt-32 px-6 md:px-20">
-    <h2 className="text-6xl font-black mb-16 text-white">LOCATIONS.</h2>
+    <h2 className="text-6xl font-black mb-16 text-white" onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}>LOCATIONS.</h2>
     <div className="grid md:grid-cols-2 gap-12">
       {[
         { name: "Stachus", addr: "Pacellistraße 5", phone: "089 22846985", img: "https://images.unsplash.com/photo-1503951914875-befbb6470521?w=800" },
         { name: "Glockenbach", addr: "Fraunhoferstraße 20", phone: "089 22846986", img: "https://images.unsplash.com/photo-1599351431202-6e0c051cd6f8?w=800" },
         { name: "Hamburg", addr: "Hohe Bleichen 17", phone: "040 12345678", img: "https://images.unsplash.com/photo-1532710093739-9470acff878f?w=800" }
       ].map((loc, i) => (
-        <div key={i} className="group cursor-pointer">
+        <div key={i} className="group cursor-pointer" onMouseEnter={() => onHover("hover")} onMouseLeave={() => onHover("default")}>
           <div className="overflow-hidden h-64 mb-6 grayscale group-hover:grayscale-0 transition-all duration-500">
             <img src={loc.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={loc.name} />
           </div>
@@ -109,27 +141,39 @@ const Locations = () => (
 
 function App() {
   const location = useLocation();
+  const { mousePosition, cursorVariant, setCursorVariant, variants } = useCursor();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e0e0e0] font-sans selection:bg-copper selection:text-black">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e0e0e0] font-sans selection:bg-copper selection:text-black cursor-none">
       
+      {/* Custom Cursor */}
+      <motion.div
+        className="fixed top-0 left-0 w-8 h-8 bg-copper rounded-full pointer-events-none z-[100] hidden md:block"
+        variants={variants}
+        animate={cursorVariant}
+        transition={{ type: "spring", stiffness: 500, damping: 28 }}
+      />
+
       {/* Nav */}
       <nav className="fixed w-full z-50 px-8 py-8 flex justify-between items-center mix-blend-difference bg-gradient-to-b from-black/50 to-transparent">
-        <Link to="/" className="text-2xl font-black tracking-tighter text-white border-2 border-white p-1">BH.</Link>
+        <Link to="/" className="text-2xl font-black tracking-tighter text-white border-2 border-white p-1 cursor-none" 
+              onMouseEnter={() => setCursorVariant("hover")} onMouseLeave={() => setCursorVariant("default")}>BH.</Link>
         <div className="hidden md:flex space-x-8 uppercase tracking-widest text-xs font-bold">
-          <Link to="/treatments" className="hover:text-copper transition-colors">Treatments</Link>
-          <Link to="/locations" className="hover:text-copper transition-colors">Locations</Link>
-          <Link to="/shop" className="hover:text-copper transition-colors opacity-50 cursor-not-allowed">Shop</Link>
-          <a href="https://buchung.barberhouse.com" className="border-b border-copper text-copper">Book Now</a>
+          <Link to="/treatments" className="hover:text-copper transition-colors cursor-none"
+                onMouseEnter={() => setCursorVariant("hover")} onMouseLeave={() => setCursorVariant("default")}>Treatments</Link>
+          <Link to="/locations" className="hover:text-copper transition-colors cursor-none"
+                onMouseEnter={() => setCursorVariant("hover")} onMouseLeave={() => setCursorVariant("default")}>Locations</Link>
+          <a href="https://buchung.barberhouse.com" className="border-b border-copper text-copper cursor-none"
+             onMouseEnter={() => setCursorVariant("hover")} onMouseLeave={() => setCursorVariant("default")}>Book Now</a>
         </div>
       </nav>
 
       {/* Page Transitions */}
       <AnimatePresence mode='wait'>
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
-          <Route path="/treatments" element={<PageWrapper><Treatments /></PageWrapper>} />
-          <Route path="/locations" element={<PageWrapper><Locations /></PageWrapper>} />
+          <Route path="/" element={<PageWrapper><Home onHover={setCursorVariant} /></PageWrapper>} />
+          <Route path="/treatments" element={<PageWrapper><Treatments onHover={setCursorVariant} /></PageWrapper>} />
+          <Route path="/locations" element={<PageWrapper><Locations onHover={setCursorVariant} /></PageWrapper>} />
         </Routes>
       </AnimatePresence>
 
